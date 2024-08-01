@@ -29,6 +29,9 @@ $debug = 0;
 use Cwd 'abs_path';
 use Getopt::Std;
 
+$prefix='/home/simon/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/';
+# $prefix='~/.espressif/tools/xtensa-esp32-elf/esp-2021r1-8.4.0/xtensa-esp32-elf/'
+
 # Used for reading the source of the other spy programs
 $script_name =$0;
 
@@ -342,7 +345,7 @@ sub spy
 # Automatically-generated file
 #
 #
-print "HELLO_WORLD $spyProgNamel!\n";
+# print "HELLO_WORLD $spyProgNamel!\n";
 my $rulesfile = "$ENV{CSCOUT_SPY_TMPDIR}/rules";
 open(RULES, ">>", $rulesfile) || die "Unable to open $rulesfile: $!\n";
 
@@ -357,6 +360,7 @@ my $rules;
 
 ';
 	print OUT "\$debug = $debug;\n";
+	print OUT "\$prefix = '$prefix';\n";
 	while (<IN>) {
 		print OUT if (/^\#\@BEGIN $spyProgName/../^\#\@END/);
 		print OUT if (/^\#\@BEGIN COMMON/../^\#\@END/);
@@ -442,7 +446,7 @@ create_project
 # Spy on ar invocations and construct corresponding CScout directives
 #
 
-$real = "/mnt/esp-idf-v4.4.7/tools/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ar";
+$real = $prefix . "/bin/xtensa-esp32-elf-ar";
 
 $origline = "ar " . join(' ', @ARGV);
 $origline =~ s/\n/ /g;
@@ -481,7 +485,7 @@ print RULES $rules;
 close(RULES);
 
 # Finally, execute the real ar
-print STDERR "Finally run ($real @ARGV))\n" if ($debug);
+# print STDERR "Finally run ($real @ARGV))\n" if ($debug);
 exit system(($real, @ARGV)) / 256;
 
 #@END
@@ -496,7 +500,7 @@ exit system(($real, @ARGV)) / 256;
 # Therefore it is easier to let gcc do the work
 #
 
-$real = "/mnt/esp-idf-v4.4.7/tools/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc";
+$real = $prefix . "/bin/xtensa-esp32-elf-gcc";
 
 # Gather input / output files and remove them from the command line
 for ($i = 0; $i <= $#ARGV; $i++) {
@@ -664,7 +668,7 @@ print RULES $rules;
 close(RULES);
 
 # Finally, execute the real gcc
-print STDERR "Finally run ($real @ARGV))\n" if ($debug);
+# print STDERR "Finally run ($real @ARGV))\n" if ($debug);
 exit system(($real, @ARGV)) / 256;
 
 # Return the absolute file name of a file, if the file exists in the
@@ -682,7 +686,7 @@ sub abs_if_exists
 # Spy on ld invocations and construct corresponding CScout directives
 #
 
-$real = "/mnt/esp-idf-v4.4.7/tools/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ld";
+$real = $prefix . "/bin/xtensa-esp32-elf-ld";
 
 # Gather input / output files and remove them from the command line
 for ($i = 0; $i <= $#ARGV; $i++) {
@@ -748,7 +752,7 @@ print RULES $rules;
 close(RULES);
 
 # Finally, execute the real ld
-print STDERR "Finally run ($real @ARGV))\n" if ($debug);
+# print STDERR "Finally run ($real @ARGV))\n" if ($debug);
 exit system(($real, @ARGV)) / 256;
 
 #@END
@@ -784,7 +788,7 @@ print RULES $rules;
 close(RULES);
 
 # Finally, execute the real mv
-print STDERR "Finally run ($real @ARGV))\n" if ($debug);
+# print STDERR "Finally run ($real @ARGV))\n" if ($debug);
 exit system(($real, @ARGV)) / 256;
 #@END
 
@@ -843,7 +847,7 @@ print RULES $rules;
 close(RULES);
 
 # Finally, execute the real install
-print STDERR "Finally run ($real @ARGV))\n" if ($debug);
+# print STDERR "Finally run ($real @ARGV))\n" if ($debug);
 exit system(($real, @ARGV)) / 256;
 #@END
 
