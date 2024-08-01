@@ -32,8 +32,6 @@ use Getopt::Std;
 # Used for reading the source of the other spy programs
 $script_name =$0;
 
-my $tmpdir = ($ENV{TMP} ? $ENV{TMP} : "/tmp");
-
 # Find and set the installation directory
 if (-d '.cscout') {
 	$instdir = '.cscout';
@@ -41,8 +39,8 @@ if (-d '.cscout') {
 	$instdir = $ENV{CSCOUT_HOME};
 } elsif (defined($ENV{HOME}) && -d $ENV{HOME} . '/.cscout') {
 	$instdir = $ENV{HOME} . '/.cscout';
-} elsif (-d 'INSTALL_INCLUDE') {
-	$instdir = 'INSTALL_INCLUDE';
+} elsif (-d '/usr/local/include/cscout') {
+	$instdir = '/usr/local/include/cscout';
 } else {
 	print STDERR "Unable to identify a CScout installation directory\n";
 	print STDERR 'Create ./.cscout, or $HOME/.cscout, or set the $CSCOUT_HOME variable' . "\n";
@@ -107,8 +105,7 @@ if ($0 =~ m/\bcscc$/) {
 	# Run as a C compiler invocation
 	prepare_spy_environment($options{T});
 	spy('gcc', 'spy-gcc');
-	$exit_status = system(("gcc", @MAKEARGS));
-	check_exit('gcc', $exit_status);
+	system(("gcc", @MAKEARGS));
 	push(@toclean, 'rules');
 	open(IN, "$ENV{CSCOUT_SPY_TMPDIR}/rules") || die "Unable to open $ENV{CSCOUT_SPY_TMPDIR}/rules for reading: $!\nMake sure you have specified appropriate compiler options.\n";
 } elsif (defined $options{N}) {
@@ -125,15 +122,17 @@ if ($0 =~ m/\bcscc$/) {
 	spy('ar', 'spy-ar');
 	spy('mv', 'spy-mv');
 	spy('install', 'spy-install');
-	my $exit_status = system(("make", @MAKEARGS));
-	check_exit('make', $exit_status);
+	system(("make", @MAKEARGS));
 	push(@toclean, 'rules');
 	if (!open(IN, "$ENV{CSCOUT_SPY_TMPDIR}/rules")) {
 		print STDERR "Warning: Unable to open $ENV{CSCOUT_SPY_TMPDIR}/rules for reading: $!\nMake sure a make command that creates an executable will precede or follow\nthis run.\n";
 		exit 0;
 	}
 }
-
+#print "script name: $0\n";
+#$ENV{CSCOUT_SPY_TMPDIR}= "/home/developer/proj/velopera/repos/velopera-ublox-firmware/tmp_dir_xtensa";
+#print "TEMP_DIR =  $ENV{CSCOUT_SPY_TMPDIR}/\n";
+#print "option N = $options{N}\n";
 # Create a CScout .cs file
 open(OUT, ">make.cs") || die "Unable to open make.cs for writing: $!\n";
 # Create a Directory to save CScout .cs files for each project
@@ -206,8 +205,8 @@ while (<IN>) {
 #include "$instdir/csmake-post-defs.h"
 $process
 #pragma popd
-#pragma block_exit
 #pragma echo "Done processing $src\\n"
+#pragma block_exit
 };
 			undef $state;
 		} elsif (/^INSRC (.*)/) {
@@ -297,29 +296,6 @@ print_to_many
 	}
 }
 
-# Check the system exit status for errors, report, and exit on failure
-sub
-check_exit
-{
-	my ($command, $exit_status) = @_;
-
-	if ($exit_status == -1) {
-		print STDERR "Failed to execute $command command: $!\n";
-		exit(1);
-	} elsif ($exit_status & 127) {
-		my $signal = ($exit_status & 127);
-		print STDERR "Child $command died with signal $signal.\n";
-		exit(1);
-	} else {
-		my $exit_code = $exit_status >> 8;
-		if ($exit_code != 0) {
-			print STDERR "Command $command failed with exit code $exit_code.\n";
-			exit($exit_code);
-		}
-	}
-}
-
-
 # Canonicalize filename
 # Replace '/' or '\' with '#'
 sub
@@ -330,18 +306,19 @@ can_filename
 	return ($filename);
 }
 
+
 # Prepare an environment for spying on command invocations
 sub
 prepare_spy_environment
 {
-	my ($option_T) = @_;
+    my ($option_T) = @_;
 	if (defined $option_T) {
-		if (! -d $option_T) {
-			die "$option_T directory doesn't exist\n";
-		}
+        if (! -d $option_T) {
+            die "$option_T directory doesn't exist\n";
+        }
 		$ENV{CSCOUT_SPY_TMPDIR} = $option_T;
 	} else {
-		$ENV{CSCOUT_SPY_TMPDIR} = $tmpdir . "/spy-make.$$";
+		$ENV{CSCOUT_SPY_TMPDIR} = ($ENV{TMP} ? $ENV{TMP} : "/tmp") . "/spy-make.$$";
 		mkdir($ENV{CSCOUT_SPY_TMPDIR}) || die "Unable to mkdir $ENV{CSCOUT_SPY_TMPDIR}: $!\n";
 	}
 
@@ -365,7 +342,7 @@ sub spy
 # Automatically-generated file
 #
 #
-
+print "HELLO_WORLD $spyProgNamel!\n";
 my $rulesfile = "$ENV{CSCOUT_SPY_TMPDIR}/rules";
 open(RULES, ">>", $rulesfile) || die "Unable to open $rulesfile: $!\n";
 
@@ -465,7 +442,7 @@ create_project
 # Spy on ar invocations and construct corresponding CScout directives
 #
 
-$real = which($0);
+$real = "/mnt/esp-idf-v4.4.7/tools/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ar";
 
 $origline = "ar " . join(' ', @ARGV);
 $origline =~ s/\n/ /g;
@@ -519,7 +496,7 @@ exit system(($real, @ARGV)) / 256;
 # Therefore it is easier to let gcc do the work
 #
 
-$real = which($0);
+$real = "/mnt/esp-idf-v4.4.7/tools/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc";
 
 # Gather input / output files and remove them from the command line
 for ($i = 0; $i <= $#ARGV; $i++) {
@@ -645,7 +622,7 @@ for $cfile (@cfiles) {
 		# Obtain a globally unique identifier across all csmake spy
 		# program runs by using the current rules file offset. This
 		# will be always increasing across all programs.
-		my $ofile = "/$tmpdir/csmake-ofile-" . tell(RULES) . '.o';
+		my $ofile = '/tmp/csmake-ofile-' . tell(RULES) . '.o';
 		push(@implicit_ofiles, $ofile);
 		$rules .= "OUTOBJ $ofile\n";
 	}
@@ -705,7 +682,7 @@ sub abs_if_exists
 # Spy on ld invocations and construct corresponding CScout directives
 #
 
-$real = which($0);
+$real = "/mnt/esp-idf-v4.4.7/tools/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ld";
 
 # Gather input / output files and remove them from the command line
 for ($i = 0; $i <= $#ARGV; $i++) {
